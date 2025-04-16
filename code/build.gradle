@@ -1,2 +1,15 @@
 group = 'com.github.sourcefranke'
 version = '0.0.1-SNAPSHOT'
+
+ext {
+    versions = [
+            springBoot:     '3.4.+',
+            errorProne:     '2.+',
+            lombok:         '1.+',
+            apachecommons:  '3.+',
+            liquibase:      '4.+',
+            h2:             '2.+',
+            mapstruct:      '1.+'
+    ]
+}
+

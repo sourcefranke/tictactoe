@@ -1,5 +1,6 @@
 plugins {
     id 'java'
+    id 'net.ltgt.errorprone' version '3.+'
     id 'org.springframework.boot' version '3.4.4'
     id 'io.spring.dependency-management' version '1.1.7'
 }
@@ -28,6 +29,9 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
+
+    errorprone "com.google.errorprone:error_prone_core:${versions.errorProne}"
+
     implementation 'org.liquibase:liquibase-core'
     compileOnly 'org.projectlombok:lombok'
     runtimeOnly 'com.h2database:h2'
@@ -35,6 +39,20 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'io.projectreactor:reactor-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('compileJava').configure {
+    options.errorprone.enabled = true
+    options.compilerArgs += [
+            "--should-stop=ifError=FLOW"
+    ]
+}
+
+tasks.named('compileTestJava').configure {
+    options.errorprone.enabled = true
+    options.compilerArgs += [
+            "--should-stop=ifError=FLOW"
+    ]
 }
 
 tasks.named('test') {
