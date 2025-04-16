@@ -1,0 +1,32 @@
+= Tic Tac Toe - Architecture
+:author: Lukas Tietenberg
+:revnumber: 1.0
+:toc:
+:toc-title: Inhaltsverzeichnis
+:toclevels: 3
+:sectnums:
+
+<<<
+include::01-introduction.adoc[]
+<<<
+include::02-constraints.adoc[]
+<<<
+include::03-context-scope.adoc[]
+<<<
+include::04-solution-strategy.adoc[]
+<<<
+include::05-building-block-view.adoc[]
+<<<
+include::06-runtime-view.adoc[]
+<<<
+include::07-deployment-view.adoc[]
+<<<
+include::08-crosscutting-concepts.adoc[]
+<<<
+include::09-architectural-decisions.adoc[]
+<<<
+include::10-quality-requirements.adoc[]
+<<<
+include::11-risks-dept.adoc[]
+<<<
+include::12-glossary.adoc[]

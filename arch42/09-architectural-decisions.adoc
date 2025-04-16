@@ -1,0 +1,7 @@
+== Architectural Decisions
+
+[options="header"]
+|===
+| Decision | Reason
+|  |
+|===

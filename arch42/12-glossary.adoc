@@ -1,0 +1,8 @@
+== Glossary
+
+[options="header"]
+|===
+| Term | Meaning
+|  |
+|===
+
