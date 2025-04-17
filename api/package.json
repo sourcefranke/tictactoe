@@ -1,0 +1,11 @@
+{
+  "name": "tictacktoe-rest-mock",
+  "version": "1.0.0",
+  "description": "Mock server for REST API of Tic Tac Toe",
+  "scripts": {
+    "local": "prism mock api.yaml --port 8080"
+  },
+  "dependencies": {
+    "@stoplight/prism-cli": "^5.14.2"
+  }
+}
