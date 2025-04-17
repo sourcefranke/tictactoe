@@ -1,0 +1,932 @@
+openapi: 3.0.3
+info:
+  title: Tic Tac Toe API
+  description: REST API für ein Tic-Tac-Toe Best-of-Five-Match-System mit Event Sourcing
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@tictactoe.com
+
+servers:
+  - url: https://api.tictactoe.com/v1
+    description: Produktionsserver
+  - url: https://staging-api.tictactoe.com/v1
+    description: Staging-Server
+
+tags:
+  - name: Players
+    description: Operationen für Spieler-Management
+  - name: Matches
+    description: Operationen für Match-Management (Best-of-Five)
+  - name: Games
+    description: Operationen für einzelne Spiele innerhalb eines Matches
+  - name: Moves
+    description: Operationen für Spielzüge
+  - name: Events
+    description: Operationen für Event Sourcing
+  - name: Statistics
+    description: Operationen für Spieler-Statistiken
+
+paths:
+  /players:
+    get:
+      summary: Liste aller Spieler abrufen
+      tags:
+        - Players
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+          description: Seitennummer für Pagination
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+          description: Anzahl der Spieler pro Seite
+      responses:
+        '200':
+          description: Erfolgreiche Anfrage
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PlayerShort'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMetadata'
+    post:
+      summary: Neuen Spieler erstellen
+      tags:
+        - Players
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlayerCreate'
+      responses:
+        '201':
+          description: Spieler erfolgreich erstellt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Player'
+        '400':
+          description: Ungültige Eingabe
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /players/{playerId}:
+    get:
+      summary: Spielerdetails abrufen
+      tags:
+        - Players
+      parameters:
+        - name: playerId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID des Spielers
+      responses:
+        '200':
+          description: Erfolgreiche Anfrage
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Player'
+        '404':
+          description: Spieler nicht gefunden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /matches:
+    get:
+      summary: Liste aller Matches abrufen
+      tags:
+        - Matches
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [CREATED, IN_PROGRESS, COMPLETED, ABORTED]
+          description: Filtere nach Match-Status
+        - name: playerId
+          in: query
+          schema:
+            type: integer
+          description: Filtere nach Spieler
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+          description: Seitennummer für Pagination
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+          description: Anzahl der Matches pro Seite
+      responses:
+        '200':
+          description: Erfolgreiche Anfrage
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MatchShort'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMetadata'
+    post:
+      summary: Neues Match erstellen
+      tags:
+        - Matches
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MatchCreate'
+      responses:
+        '201':
+          description: Match erfolgreich erstellt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Match'
+        '400':
+          description: Ungültige Eingabe
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /matches/{matchId}:
+    get:
+      summary: Match-Details abrufen
+      tags:
+        - Matches
+      parameters:
+        - name: matchId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID des Matches
+      responses:
+        '200':
+          description: Erfolgreiche Anfrage
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Match'
+        '404':
+          description: Match nicht gefunden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /matches/{matchId}/start:
+    post:
+      summary: Match starten
+      tags:
+        - Matches
+      parameters:
+        - name: matchId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID des Matches
+      responses:
+        '200':
+          description: Match erfolgreich gestartet
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Match'
+        '400':
+          description: Match kann nicht gestartet werden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Match nicht gefunden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /matches/{matchId}/abort:
+    post:
+      summary: Match abbrechen
+      tags:
+        - Matches
+      parameters:
+        - name: matchId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID des Matches
+      responses:
+        '200':
+          description: Match erfolgreich abgebrochen
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Match'
+        '400':
+          description: Match kann nicht abgebrochen werden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Match nicht gefunden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /matches/{matchId}/games:
+    get:
+      summary: Liste aller Spiele in einem Match abrufen
+      tags:
+        - Games
+      parameters:
+        - name: matchId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID des Matches
+      responses:
+        '200':
+          description: Erfolgreiche Anfrage
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Game'
+        '404':
+          description: Match nicht gefunden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /matches/{matchId}/games/current:
+    get:
+      summary: Aktuelles Spiel in einem Match abrufen
+      tags:
+        - Games
+      parameters:
+        - name: matchId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID des Matches
+      responses:
+        '200':
+          description: Erfolgreiche Anfrage
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Game'
+        '404':
+          description: Match oder aktuelles Spiel nicht gefunden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /games/{gameId}:
+    get:
+      summary: Spieldetails abrufen
+      tags:
+        - Games
+      parameters:
+        - name: gameId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID des Spiels
+      responses:
+        '200':
+          description: Erfolgreiche Anfrage
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Game'
+        '404':
+          description: Spiel nicht gefunden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /games/{gameId}/board:
+    get:
+      summary: Aktuellen Spielbrettzustand abrufen
+      tags:
+        - Games
+      parameters:
+        - name: gameId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID des Spiels
+      responses:
+        '200':
+          description: Erfolgreiche Anfrage
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BoardState'
+        '404':
+          description: Spiel nicht gefunden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /games/{gameId}/moves:
+    get:
+      summary: Liste aller Züge in einem Spiel abrufen
+      tags:
+        - Moves
+      parameters:
+        - name: gameId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID des Spiels
+      responses:
+        '200':
+          description: Erfolgreiche Anfrage
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Move'
+        '404':
+          description: Spiel nicht gefunden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      summary: Neuen Zug durchführen
+      tags:
+        - Moves
+      parameters:
+        - name: gameId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID des Spiels
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MoveCreate'
+      responses:
+        '201':
+          description: Zug erfolgreich durchgeführt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Move'
+        '400':
+          description: Ungültiger Zug
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Spiel nicht gefunden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /events:
+    get:
+      summary: Event-Historie abrufen
+      tags:
+        - Events
+      parameters:
+        - name: aggregateType
+          in: query
+          schema:
+            type: string
+            enum: [MATCH, GAME, PLAYER]
+          description: Typ des Aggregats
+        - name: aggregateId
+          in: query
+          schema:
+            type: integer
+          description: ID des Aggregats
+        - name: eventType
+          in: query
+          schema:
+            type: string
+          description: Typ des Events
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+          description: Seitennummer für Pagination
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+          description: Anzahl der Events pro Seite
+      responses:
+        '200':
+          description: Erfolgreiche Anfrage
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Event'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMetadata'
+
+  /statistics/players/{playerId}:
+    get:
+      summary: Statistiken eines Spielers abrufen
+      tags:
+        - Statistics
+      parameters:
+        - name: playerId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID des Spielers
+      responses:
+        '200':
+          description: Erfolgreiche Anfrage
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Statistics'
+        '404':
+          description: Spieler nicht gefunden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /statistics/leaderboard:
+    get:
+      summary: Bestenliste abrufen
+      tags:
+        - Statistics
+      parameters:
+        - name: sortBy
+          in: query
+          schema:
+            type: string
+            enum: [MATCHES_WON, WIN_RATIO, GAMES_WON]
+            default: MATCHES_WON
+          description: Sortierkriterium
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+          description: Anzahl der Spieler in der Bestenliste
+      responses:
+        '200':
+          description: Erfolgreiche Anfrage
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/LeaderboardEntry'
+
+components:
+  schemas:
+    PlayerCreate:
+      type: object
+      required:
+        - username
+        - email
+        - password
+      properties:
+        username:
+          type: string
+          example: "johndoe"
+        email:
+          type: string
+          format: email
+          example: "john@example.com"
+        password:
+          type: string
+          format: password
+          example: "securePassword123"
+
+    Player:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        username:
+          type: string
+          example: "johndoe"
+        email:
+          type: string
+          format: email
+          example: "john@example.com"
+        createdAt:
+          type: string
+          format: date-time
+        lastLogin:
+          type: string
+          format: date-time
+          nullable: true
+
+    PlayerShort:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        username:
+          type: string
+          example: "johndoe"
+
+    MatchCreate:
+      type: object
+      required:
+        - player1Id
+        - player2Id
+      properties:
+        player1Id:
+          type: integer
+          example: 1
+        player2Id:
+          type: integer
+          example: 2
+
+    Match:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        player1:
+          $ref: '#/components/schemas/PlayerShort'
+        player2:
+          $ref: '#/components/schemas/PlayerShort'
+        currentScorePlayer1:
+          type: integer
+          example: 2
+        currentScorePlayer2:
+          type: integer
+          example: 1
+        winner:
+          oneOf:
+            - $ref: '#/components/schemas/PlayerShort'
+            - type: 'null'
+          nullable: true
+        status:
+          type: string
+          enum: [CREATED, IN_PROGRESS, COMPLETED, ABORTED]
+          example: "IN_PROGRESS"
+        createdAt:
+          type: string
+          format: date-time
+        startedAt:
+          type: string
+          format: date-time
+          nullable: true
+        endedAt:
+          type: string
+          format: date-time
+          nullable: true
+        currentGame:
+          oneOf:
+            - $ref: '#/components/schemas/GameShort'
+            - type: 'null'
+          nullable: true
+
+    MatchShort:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        player1:
+          $ref: '#/components/schemas/PlayerShort'
+        player2:
+          $ref: '#/components/schemas/PlayerShort'
+        currentScorePlayer1:
+          type: integer
+          example: 2
+        currentScorePlayer2:
+          type: integer
+          example: 1
+        status:
+          type: string
+          enum: [CREATED, IN_PROGRESS, COMPLETED, ABORTED]
+          example: "IN_PROGRESS"
+
+    Game:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        matchId:
+          type: integer
+          example: 1
+        gameNumber:
+          type: integer
+          example: 3
+        player1Symbol:
+          type: string
+          enum: ['X', 'O']
+          example: "X"
+        player2Symbol:
+          type: string
+          enum: ['X', 'O']
+          example: "O"
+        startingPlayer:
+          $ref: '#/components/schemas/PlayerShort'
+        winner:
+          oneOf:
+            - $ref: '#/components/schemas/PlayerShort'
+            - type: 'null'
+          nullable: true
+        status:
+          type: string
+          enum: [CREATED, IN_PROGRESS, WON, DRAWN, ABORTED]
+          example: "IN_PROGRESS"
+        createdAt:
+          type: string
+          format: date-time
+        startedAt:
+          type: string
+          format: date-time
+          nullable: true
+        endedAt:
+          type: string
+          format: date-time
+          nullable: true
+        board:
+          $ref: '#/components/schemas/BoardState'
+        moves:
+          type: array
+          items:
+            $ref: '#/components/schemas/Move'
+
+    GameShort:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        gameNumber:
+          type: integer
+          example: 3
+        status:
+          type: string
+          enum: [CREATED, IN_PROGRESS, WON, DRAWN, ABORTED]
+          example: "IN_PROGRESS"
+
+    BoardState:
+      type: object
+      properties:
+        cells:
+          type: array
+          items:
+            type: array
+            items:
+              type: string
+              enum: ['X', 'O', ' ']
+          example: [
+            ['X', ' ', 'O'],
+            [' ', 'X', ' '],
+            ['O', ' ', ' ']
+          ]
+        nextPlayer:
+          oneOf:
+            - $ref: '#/components/schemas/PlayerShort'
+            - type: 'null'
+          nullable: true
+
+    MoveCreate:
+      type: object
+      required:
+        - playerId
+        - row
+        - column
+      properties:
+        playerId:
+          type: integer
+          example: 1
+        row:
+          type: integer
+          minimum: 0
+          maximum: 2
+          example: 1
+        column:
+          type: integer
+          minimum: 0
+          maximum: 2
+          example: 1
+
+    Move:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        gameId:
+          type: integer
+          example: 1
+        player:
+          $ref: '#/components/schemas/PlayerShort'
+        row:
+          type: integer
+          minimum: 0
+          maximum: 2
+          example: 1
+        column:
+          type: integer
+          minimum: 0
+          maximum: 2
+          example: 1
+        moveNumber:
+          type: integer
+          example: 3
+        createdAt:
+          type: string
+          format: date-time
+
+    Event:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        eventType:
+          type: string
+          example: "MOVE_MADE_EVENT"
+        aggregateType:
+          type: string
+          enum: [MATCH, GAME, PLAYER]
+          example: "GAME"
+        aggregateId:
+          type: integer
+          example: 1
+        eventData:
+          type: object
+          additionalProperties: true
+          example: {
+            "playerId": 1,
+            "row": 1,
+            "column": 1,
+            "symbol": "X"
+          }
+        sequenceNumber:
+          type: integer
+          example: 3
+        createdAt:
+          type: string
+          format: date-time
+
+    Statistics:
+      type: object
+      properties:
+        playerId:
+          type: integer
+          example: 1
+        player:
+          $ref: '#/components/schemas/PlayerShort'
+        matchesPlayed:
+          type: integer
+          example: 15
+        matchesWon:
+          type: integer
+          example: 10
+        gamesPlayed:
+          type: integer
+          example: 45
+        gamesWon:
+          type: integer
+          example: 28
+        gamesDrawn:
+          type: integer
+          example: 5
+        winRatio:
+          type: number
+          format: float
+          example: 0.667
+
+    LeaderboardEntry:
+      type: object
+      properties:
+        rank:
+          type: integer
+          example: 1
+        player:
+          $ref: '#/components/schemas/PlayerShort'
+        matchesPlayed:
+          type: integer
+          example: 15
+        matchesWon:
+          type: integer
+          example: 10
+        winRatio:
+          type: number
+          format: float
+          example: 0.667
+
+    PaginationMetadata:
+      type: object
+      properties:
+        totalItems:
+          type: integer
+          example: 100
+        itemsPerPage:
+          type: integer
+          example: 20
+        currentPage:
+          type: integer
+          example: 1
+        totalPages:
+          type: integer
+          example: 5
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Resource not found"
+        code:
+          type: string
+          example: "NOT_FOUND"
+        message:
+          type: string
+          example: "The requested resource could not be found"
+        timestamp:
+          type: string
+          format: date-time
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - BearerAuth: []
