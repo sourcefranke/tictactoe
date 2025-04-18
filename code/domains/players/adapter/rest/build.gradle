@@ -1,5 +1,6 @@
 plugins {
     id 'java'
+    id 'org.openapi.generator' version '+'
     id 'net.ltgt.errorprone' version '3.+'
     id 'org.springframework.boot' version '3.4.4'
     id 'io.spring.dependency-management' version '1.1.7'
@@ -25,15 +26,45 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
 
     errorprone "com.google.errorprone:error_prone_core:${versions.errorProne}"
+
+    implementation 'org.openapitools:openapi-generator-gradle-plugin:7.+'
+    implementation 'io.swagger.core.v3:swagger-annotations:2.+'
+    implementation 'javax.validation:validation-api:2.+'
+    implementation 'javax.annotation:javax.annotation-api:1.+'
+    implementation 'org.openapitools:jackson-databind-nullable:0.+'
+    implementation "org.apache.commons:commons-lang3:${versions.apachecommons}"
+
+    implementation "org.mapstruct:mapstruct:${versions.mapstruct}"
+    annotationProcessor "org.mapstruct:mapstruct-processor:${versions.mapstruct}"
+
     compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
 
-    annotationProcessor 'org.projectlombok:lombok'
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
+openApiGenerate {
+    generatorName.set("spring")
+    inputSpec.set("$projectDir/../../../../../api/api.yaml")
+    outputDir.set("$buildDir/api")
+    apiPackage.set("com.github.sourcefranke.tictactoe.players.adapter.rest.api")
+    invokerPackage.set("com.github.sourcefranke.tictactoe.players.adapter.rest.invoker")
+    modelPackage.set("com.github.sourcefranke.tictactoe.players.adapter.rest.model")
+    configOptions.put("interfaceOnly", "true")
+    configOptions.put("reactive", "true")
+    globalProperties = [
+            apis: "players",
+            models: "Error,Player,PlayerCreate,PlayersGet200Response"
+    ]
 }
 
 tasks.named('compileJava').configure {
+    dependsOn tasks.named('openApiGenerate')
     options.errorprone.enabled = true
     options.compilerArgs += [
             "--should-stop=ifError=FLOW"
@@ -47,6 +78,14 @@ tasks.named('compileTestJava').configure {
     ]
 }
 
-tasks.named('test') {
-    useJUnitPlatform()
+bootJar {
+    enabled = false
+}
+
+sourceSets {
+    main {
+        java {
+            srcDirs += "$buildDir/api/src/main/java"
+        }
+    }
 }
