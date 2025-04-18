@@ -1,29 +1,25 @@
 openapi: 3.0.3
 info:
   title: Tic Tac Toe API
-  description: REST API für ein Tic-Tac-Toe Best-of-Five-Match-System mit Event Sourcing
+  description: REST API für ein Tic-Tac-Toe Best-of-x-Match
   version: 1.0.0
   contact:
-    name: API Support
-    email: support@tictactoe.com
+    name: sourcefranke
+    email: lukas.tietenberg@outlook.de
 
 servers:
-  - url: https://api.tictactoe.com/v1
-    description: Produktionsserver
-  - url: https://staging-api.tictactoe.com/v1
-    description: Staging-Server
+  - url: http://localhost:8080
+    description: local
 
 tags:
   - name: Players
     description: Operationen für Spieler-Management
   - name: Matches
-    description: Operationen für Match-Management (Best-of-Five)
+    description: Operationen für Match-Management
   - name: Games
     description: Operationen für einzelne Spiele innerhalb eines Matches
   - name: Moves
     description: Operationen für Spielzüge
-  - name: Events
-    description: Operationen für Event Sourcing
   - name: Statistics
     description: Operationen für Spieler-Statistiken
 
@@ -442,55 +438,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-
-  /events:
-    get:
-      summary: Event-Historie abrufen
-      tags:
-        - Events
-      parameters:
-        - name: aggregateType
-          in: query
-          schema:
-            type: string
-            enum: [MATCH, GAME, PLAYER]
-          description: Typ des Aggregats
-        - name: aggregateId
-          in: query
-          schema:
-            type: integer
-          description: ID des Aggregats
-        - name: eventType
-          in: query
-          schema:
-            type: string
-          description: Typ des Events
-        - name: page
-          in: query
-          schema:
-            type: integer
-            default: 1
-          description: Seitennummer für Pagination
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            default: 50
-          description: Anzahl der Events pro Seite
-      responses:
-        '200':
-          description: Erfolgreiche Anfrage
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Event'
-                  meta:
-                    $ref: '#/components/schemas/PaginationMetadata'
 
   /statistics/players/{playerId}:
     get:
@@ -921,12 +868,3 @@ components:
         timestamp:
           type: string
           format: date-time
-
-  securitySchemes:
-    BearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-
-security:
-  - BearerAuth: []
