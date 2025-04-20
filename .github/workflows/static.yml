@@ -49,7 +49,7 @@ jobs:
       - name: Build arc42 Documentation
         run: |
           mkdir -p build/arc42
-          asciidoctor "index.adoc" -o "build/arc42/index.html"
+          asciidoctor "arc42/index.adoc" -o "build/arc42/index.html"
 
       # Build sli.dev slides
 #      - name: Build sli.dev Slides
