@@ -26,10 +26,10 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
-      - name: Install Dependencies
-        run: |
-          npm install -g @slidev/cli
-          npm install
+      #- name: Install Dependencies
+       # run: |
+        #  npm install -g @slidev/cli
+         # npm install
 
       # Build OpenAPI docs
       - name: Copy OpenAPI files
